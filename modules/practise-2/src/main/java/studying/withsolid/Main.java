@@ -7,6 +7,9 @@ import studying.withsolid.service.impl.TextReportSaver;
 
 import java.time.LocalDateTime;
 
+/**
+ * Application entry point that selects concrete report protocols.
+ */
 public class Main {
     /**
      * Runs the report creation, persistence, and delivery demonstration.

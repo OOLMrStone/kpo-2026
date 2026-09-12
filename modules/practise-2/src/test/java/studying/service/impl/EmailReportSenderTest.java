@@ -46,6 +46,15 @@ class EmailReportSenderTest {
         assertEquals(ApplicationErrorCode.VALIDATION_ERROR, exception.getCode());
     }
 
+    @Test
+    @DisplayName("Выбрасывает прикладную ошибку, если email получателя пуст")
+    void sendRejectsBlankEmail() {
+        var exception = assertThrows(ApplicationException.class,
+                () -> new EmailReportSender().send(createReport(), "  "));
+
+        assertEquals(ApplicationErrorCode.VALIDATION_ERROR, exception.getCode());
+    }
+
     private Report createReport() {
         return Report.builder()
                 .title("Продажи")
