@@ -16,3 +16,12 @@
 ```
 
 Решение находится в `modules/homework-1`. Практики 1 и 2 сохранены в своих модулях.
+
+## Домашнее задание 2. ПОС
+
+[Решение, запуск и архитектура](modules/homework-2/README.md).
+
+```bash
+./gradlew :modules:homework-2:installDist --console=plain
+modules/homework-2/build/install/homework-2/bin/homework-2
+```
