@@ -1,7 +1,7 @@
 package studying.pos.domain;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.Map;
 import java.util.Objects;
@@ -18,16 +18,17 @@ public final class FinalScoreService {
         if (gradebook.rubric().criteria().isEmpty()) {
             throw new DomainException("Добавьте хотя бы один критерий перед расчётом итога.");
         }
-        BigDecimal weighted = BigDecimal.ZERO;
+        ExactFraction weighted = new ExactFraction(BigInteger.ZERO, BigInteger.ONE);
         BigDecimal weights = BigDecimal.ZERO;
         for (Criterion criterion : gradebook.rubric().criteria()) {
             Evaluation evaluation = evaluations.get(criterion.id());
             BigDecimal score = evaluation == null ? missingScorePolicy.missingScore(criterion) : evaluation.score();
-            weighted = weighted.add(score.divide(criterion.maxScore(), MathContext.DECIMAL128)
-                    .multiply(criterion.weight()));
+            weighted = weighted.add(ExactFraction.ratio(score.multiply(criterion.weight()), criterion.maxScore()));
             weights = weights.add(criterion.weight());
         }
-        BigDecimal result = weighted.multiply(BigDecimal.TEN).divide(weights, 2, RoundingMode.HALF_UP);
+        BigDecimal numerator = new BigDecimal(weighted.numerator()).multiply(BigDecimal.TEN);
+        BigDecimal denominator = new BigDecimal(weighted.denominator()).multiply(weights);
+        BigDecimal result = numerator.divide(denominator, 2, RoundingMode.HALF_UP);
         return new FinalScore(result, evaluations.size(), gradebook.rubric().criteria().size());
     }
 }

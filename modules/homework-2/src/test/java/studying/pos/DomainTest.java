@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import studying.pos.domain.Criterion;
 import studying.pos.domain.DomainException;
@@ -147,6 +148,52 @@ class DomainTest {
         book.addCriterion(criterion("C", "3", "7"));
         book.evaluate(new Id("S"), new Id("C"), decimal("2"));
         assertEquals(decimal("6.67"),
+                new FinalScoreService(new ZeroMissingScore()).calculate(book, new Id("S")).value());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "0.999999, 3, 3, 13, 0.62",
+        "1, 3, 3, 13, 0.63",
+        "1.000001, 3, 3, 13, 0.63",
+        "1, 3, 0.3, 1.3, 0.63",
+        "10, 30, 30, 130, 0.63",
+        "0, 3, 3, 13, 0.00"
+    })
+    @DisplayName("Точная граница половины сотой и соседние значения округляются математически")
+    void exactRoundingBoundary(String score, String maximum, String weight, String otherWeight, String expected) {
+        Gradebook book = new Gradebook(new Id("P"));
+        book.addStudent(new Student(new Id("S"), "Студент"));
+        book.addCriterion(criterion("A", maximum, weight));
+        book.addCriterion(criterion("B", "10", otherWeight));
+        book.evaluate(new Id("S"), new Id("A"), decimal(score));
+        book.evaluate(new Id("S"), new Id("B"), BigDecimal.ZERO);
+        assertEquals(decimal(expected),
+                new FinalScoreService(new ZeroMissingScore()).calculate(book, new Id("S")).value());
+    }
+
+    @Test
+    @DisplayName("Несколько периодических дробей складываются без промежуточного округления")
+    void exactSumOfFractions() {
+        Gradebook book = new Gradebook(new Id("P"));
+        book.addStudent(new Student(new Id("S"), "Студент"));
+        book.addCriterion(criterion("A", "3", "1"));
+        book.addCriterion(criterion("B", "6", "1"));
+        book.addCriterion(criterion("C", "10", "6"));
+        book.evaluate(new Id("S"), new Id("A"), BigDecimal.ONE);
+        book.evaluate(new Id("S"), new Id("B"), BigDecimal.ONE);
+        assertEquals(decimal("0.63"),
+                new FinalScoreService(new ZeroMissingScore()).calculate(book, new Id("S")).value());
+    }
+
+    @Test
+    @DisplayName("Округление у верхней границы шкалы даёт десять")
+    void roundingToTen() {
+        Gradebook book = new Gradebook(new Id("P"));
+        book.addStudent(new Student(new Id("S"), "Студент"));
+        book.addCriterion(criterion("A", "2000", "0.01"));
+        book.evaluate(new Id("S"), new Id("A"), decimal("1999"));
+        assertEquals(decimal("10.00"),
                 new FinalScoreService(new ZeroMissingScore()).calculate(book, new Id("S")).value());
     }
 
